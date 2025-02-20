@@ -1,7 +1,7 @@
 import torch.nn as nn
 import copy 
 from attention import MultiHeadAttention
-
+import torch
 
 class MLP(nn.Module):
     def __init__(self, n_state, config):
@@ -22,9 +22,9 @@ class TransformerBlock(nn.Module):
     def __init__(self, n_ctx, config, scale=False):
         super(TransformerBlock, self).__init__()
         d_emebd = config.d_emebd
-        self.layer_norm_1 = LayerNorm(d_emebd, eps=config.layer_norm_epsilon)
+        self.layer_norm_1 = nn.LayerNorm(d_emebd, eps=config.layer_norm_epsilon)
         self.attention = MultiHeadAttention(config.n_heads, d_emebd)
-        self.layer_norm_2 = LayerNorm(d_emebd, eps=config.layer_norm_epsilon)
+        self.layer_norm_2 = nn.LayerNorm(d_emebd, eps=config.layer_norm_epsilon)
         self.mlp = MLP(4 * d_emebd, config)
 
     def forward(self, x):
@@ -46,4 +46,43 @@ class GPT2(nn.Module):
         self.positional_embedding = nn.Embedding(config.n_positions, config.d_embed)
         block = TransformerBlock(config.n_ctx, config, scale=True)
         self.blocks = nn.ModuleList([copy.deepcopy(block) for _ in range(config.n_layer)])
-        self.layer_norm = LayerNorm(config.d_embed, eps=config.layer_norm_epsilon)
+        self.layer_norm = nn.LayerNorm(config.d_embed, eps=config.layer_norm_epsilon)
+
+
+    def forward(self, input_ids, position_ids=None, token_type_ids=None, past=None):
+        if past is None:
+            past_length = 0
+            past = [None] * len(self.blocks)
+        else:
+            past_length = past[0][0].size(-2)
+        
+        if position_ids is None:
+            position_ids = torch.arrange(past_length, input_ids.size(-1) + past_length, dtype=torch.long, device=input_ids.device)
+            position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
+
+        input_shape = input_ids.size()
+        
+        input_ids = input_ids.view(-1, input_shape.size(-1))
+        position_ids = position_ids.view(-1, position_ids.size(-1))
+
+        text_embeddings = self.text_embeddding(input_ids)
+        positional_embeddings = self.positional_embedding(position_ids)
+
+        if token_type_ids is not None:
+            token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1))
+            token_type_embeddings = self.text_embeddding(token_type_ids)
+        else:
+            token_type_embeddings = 0
+
+        hidden_states = text_embeddings + positional_embeddings + token_type_embeddings
+        presents = []
+        for block, layer_past in zip(self.blocks, past):
+            hidden_states, present = block(hidden_states, layer_past)
+            presents.append(present)
+            
+        hidden_states = self.layer_norm(hidden_states)
+        output_shape = input_shape + (hidden_states.size(-1),)
+        return hidden_states.view(*output_shape), presents
+
+
+        
