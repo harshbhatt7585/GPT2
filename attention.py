@@ -13,6 +13,7 @@ class Attention(nn.Module):
         
         self.d_heads = d_embed // n_heads
     
+    
     def forward(self, x):
         # x: (batch, sequence, features)
 
@@ -33,6 +34,10 @@ class Attention(nn.Module):
         weight = q @ k.transpose(-1, -2)
 
         weight /= math.sqrt(self.d_heads)
+
+        mask = torch.ones_like(weight, dtype=torch.bool).triu(1)
+        weight.masked_fill_(mask, -torch.inf)
+
         weight = F.softmax(weight, dim=-1)
         output = weight @ v
 
@@ -41,6 +46,8 @@ class Attention(nn.Module):
 
         output = self.out_proj(output)
         return output
+
+
         
         
         
