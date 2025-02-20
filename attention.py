@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.nn import function as F
 
 
-class Attention(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self, n_heads, d_embed):
         super().__init__()
         self.n_heads = n_heads
@@ -44,8 +44,12 @@ class Attention(nn.Module):
         output = output.transpose(1, 2)
         output = output.reshape(input_shape)
 
+        # (b, s, f)
         output = self.out_proj(output)
+
         return output
+    
+
 
 
         
