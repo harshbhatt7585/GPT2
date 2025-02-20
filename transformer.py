@@ -48,6 +48,12 @@ class GPT2(nn.Module):
         self.blocks = nn.ModuleList([copy.deepcopy(block) for _ in range(config.n_layer)])
         self.layer_norm = nn.LayerNorm(config.d_embed, eps=config.layer_norm_epsilon)
 
+    
+    def set_mbeddings_weights(self, model_embedding_weights):
+        embed_shape = model_embedding_weights.shape
+        self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=True)
+        self.decoder.weight = model_embedding_weights
+
 
     def forward(self, input_ids, position_ids=None, token_type_ids=None, past=None):
         if past is None:
@@ -79,10 +85,27 @@ class GPT2(nn.Module):
         for block, layer_past in zip(self.blocks, past):
             hidden_states, present = block(hidden_states, layer_past)
             presents.append(present)
-            
+
         hidden_states = self.layer_norm(hidden_states)
         output_shape = input_shape + (hidden_states.size(-1),)
         return hidden_states.view(*output_shape), presents
+    
 
 
-        
+class GPT2Head(nn.Module):
+    def __init__(self, model_embedding_weights, config):
+        super(GPT2Head, self).__init__()
+        self.d_embed = config.d_embed
+        self.set_embedding_weights(model_embedding_weights)
+    
+    def set_mbeddings_weights(self, model_embedding_weights):
+        embed_shape = model_embedding_weights.shape
+        self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=True)
+        self.decoder.weight = model_embedding_weights
+    
+    def forward(self, hidden_state):
+        lm_logits = self.decoder(hidden_state)
+        return lm_logits
+
+
+
