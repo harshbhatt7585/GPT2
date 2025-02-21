@@ -37,8 +37,25 @@ class TransformerBlock(nn.Module):
         return x, present
 
 
+class GPTDecoder(nn.Module):
+    def __init__(self, model_embedding_weights, config):
+        super(GPTDecoder, self).__init__()
+        self.d_embed = config.d_embed
+        self.set_embedding_weights(model_embedding_weights)
+    
+    def set_mbeddings_weights(self, model_embedding_weights):
+        embed_shape = model_embedding_weights.shape
+        self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=True)
+        self.decoder.weight = model_embedding_weights
+    
+    def forward(self, hidden_state):
+        lm_logits = self.decoder(hidden_state)
+        return lm_logits
+
+
+
 class GPT2(nn.Module):
-    def __init__(self):
+    def __init__(self, config):
         super(GPT2, self).__init__()
         self.n_layer = config.n_layer
         self.d_embed = config.d_embed
@@ -52,7 +69,7 @@ class GPT2(nn.Module):
 
         self.deocder = GPTDecoder(self.text_embeddding.weight, config)
 
-    
+
     def set_mbeddings_weights(self, model_embedding_weights):
         embed_shape = model_embedding_weights.shape
         self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=True)
@@ -100,6 +117,8 @@ class GPT2(nn.Module):
         return logits, presents
     
     
+
+
 
 
     
