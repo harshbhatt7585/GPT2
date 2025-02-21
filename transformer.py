@@ -7,9 +7,9 @@ class MLP(nn.Module):
     def __init__(self, n_state, config):
         super(MLP, self).__init__()
         d_embed = config.d_embed
-        self.in_proj = nn.Conv1d(n_state, d_embed)
-        self.out_proj = nn.Conv1d(d_embed, n_state)
-        self.gelu = nn.GeLU()
+        self.in_proj = nn.Conv1d(n_state, d_embed, kernel_size=1, stride=1, padding=0)
+        self.out_proj = nn.Conv1d(d_embed, n_state, kernel_size=1, stride=1, padding=0)
+        self.gelu = nn.GELU()
 
     def forward(self, x):
         x = self.gelu(x)
@@ -43,7 +43,7 @@ class GPTDecoder(nn.Module):
         self.d_embed = config.d_embed
         self.set_embedding_weights(model_embedding_weights)
     
-    def set_mbeddings_weights(self, model_embedding_weights):
+    def set_embedding_weights(self, model_embedding_weights):
         embed_shape = model_embedding_weights.shape
         self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=True)
         self.decoder.weight = model_embedding_weights
