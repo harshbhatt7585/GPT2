@@ -27,8 +27,9 @@ class TransformerBlock(nn.Module):
         self.layer_norm_2 = nn.LayerNorm(d_emebd, eps=config.layer_norm_epsilon)
         self.mlp = MLP(4 * d_emebd, config)
 
-    def forward(self, x):
-        residue = self.attention(x)
+    def forward(self, x, layer_past=None):
+        x = self.layer_norm_1(x)
+        residue = self.attention(x, layer_past=layer_past)
         x = x + residue
         residue = self.mlp(x)
         x = x + residue
@@ -108,4 +109,20 @@ class GPT2Head(nn.Module):
         return lm_logits
 
 
+class GPT2LMHeadModel(nn.Module):
+    def __init__(self, config):
+        super(GPT2LMHeadModel, self).__init__()
+        self.transformer = GPT2(config)
+        self.lm_head = GPT2Head(self.transformer.text_embeddding.weight, config)
 
+    def set_teid(self):
+        self.lm_head.set_mbeddings_weights(self.transformer.text_embeddding.weight)
+    
+    def forward(self, input_ids, position_ids=None, token_type_ids=None, lm_labels=None, past=None):
+        hidden_states, presents = self.transformer(input_ids, position_ids, token_type_ids, past)
+        lm_logits = self.lm_head(hidden_states)
+        if lm_labels is not None:
+            loss_fct = nn.CrossEntropyLoss(ignore_index=1)
+            loss = loss_fct(lm_logits.view(-1, lm_logits.size(-1)), lm_labels.view(-1))
+            return loss
+        return lm_logits, presents
