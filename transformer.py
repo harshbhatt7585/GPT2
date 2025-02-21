@@ -7,8 +7,8 @@ class MLP(nn.Module):
     def __init__(self, n_state, config):
         super(MLP, self).__init__()
         d_embed = config.d_embed
-        self.in_proj = nn.Conv1d(n_state, d_embed, kernel_size=1, stride=1, padding=0)
-        self.out_proj = nn.Conv1d(d_embed, n_state, kernel_size=1, stride=1, padding=0)
+        self.in_proj = nn.Linear(n_state, d_embed)
+        self.out_proj = nn.Linear(d_embed, n_state)
         self.gelu = nn.GELU()
 
     def forward(self, x):
@@ -25,7 +25,7 @@ class TransformerBlock(nn.Module):
         self.layer_norm_1 = nn.LayerNorm(d_embed, eps=config.layer_norm_epsilon)
         self.attention = MultiHeadAttention(config.n_heads, d_embed)
         self.layer_norm_2 = nn.LayerNorm(d_embed, eps=config.layer_norm_epsilon)
-        self.mlp = MLP(4 * d_embed, config)
+        self.mlp = MLP(d_embed, config)
 
     def forward(self, x, layer_past=None):
         x = self.layer_norm_1(x)
@@ -63,11 +63,11 @@ class GPT2(nn.Module):
 
         self.text_embeddding = nn.Embedding(config.vocab_size, config.d_embed)
         self.positional_embedding = nn.Embedding(config.n_positions, config.d_embed)
-        block = TransformerBlock(config.n_ctx, config, scale=True)
-        self.transformer_blocks = nn.ModuleList([copy.deepcopy(block) for _ in range(config.n_layer)])
+        self.transformer = TransformerBlock(config.n_ctx, config, scale=True)
+        self.transformer_blocks = nn.ModuleList([copy.deepcopy(self.transformer) for _ in range(config.n_layer)])
         self.layer_norm = nn.LayerNorm(config.d_embed, eps=config.layer_norm_epsilon)
 
-        self.deocder = GPTDecoder(self.text_embeddding.weight, config)
+        self.decoder = GPTDecoder(self.text_embeddding.weight, config)
 
 
     def set_mbeddings_weights(self, model_embedding_weights):
@@ -86,12 +86,12 @@ class GPT2(nn.Module):
             past_length = past[0][0].size(-2)
         
         if position_ids is None:
-            position_ids = torch.arrange(past_length, input_ids.size(-1) + past_length, dtype=torch.long, device=input_ids.device)
+            position_ids = torch.arange(past_length, input_ids.size(-1) + past_length, dtype=torch.long, device=input_ids.device)
             position_ids = position_ids.unsqueeze(0).expand_as(input_ids)
 
         input_shape = input_ids.size()
         
-        input_ids = input_ids.view(-1, input_shape.size(-1))
+        input_ids = input_ids.view(-1, input_ids.size(-1))
         position_ids = position_ids.view(-1, position_ids.size(-1))
 
         text_embeddings = self.text_embeddding(input_ids)
@@ -105,14 +105,14 @@ class GPT2(nn.Module):
 
         hidden_states = text_embeddings + positional_embeddings + token_type_embeddings
         presents = []
-        for block, layer_past in zip(self.blocks, past):
+        for block, layer_past in zip(self.transformer_blocks, past):
             hidden_states, present = block(hidden_states, layer_past)
             presents.append(present)
 
         hidden_states = self.layer_norm(hidden_states)
         output_shape = input_shape + (hidden_states.size(-1),)
-        hidden_states = hidden_states.view(*output_shape), presents
-    
+        hidden_states = hidden_states.view(*output_shape)
+        
         logits = self.decoder(hidden_states)
         return logits, presents
     
@@ -131,8 +131,12 @@ if __name__ == "__main__":
 
         
     config = GPTConfig()
-    model = GPT2(config)
+    model = GPT2(config).to('mps')
 
+    input_ids = torch.randint(0, config.vocab_size, (24, 100), dtype=torch.long).to('mps')
+    print(input_ids.shape)
+    output, _ = model(input_ids)
+    print(output.shape)
 
 
 

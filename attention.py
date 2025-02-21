@@ -8,8 +8,8 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
         self.n_heads = n_heads
         self.d_heads = d_embed // n_heads  # Head size
-        self.in_proj = nn.Conv1d(d_embed, 3 * d_embed, kernel_size=1, stride=1, padding=0)
-        self.out_proj = nn.Conv1d(d_embed, d_embed, kernel_size=1, stride=1, padding=0)
+        self.in_proj = nn.Linear(d_embed, 3 * d_embed)
+        self.out_proj = nn.Linear(d_embed, d_embed)
     
     def forward(self, x, layer_past=None):
         # x: (batch, sequence, features)
