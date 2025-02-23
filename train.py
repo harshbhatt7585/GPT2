@@ -6,12 +6,12 @@ from dataset import prepare_gpt2_dataset
 
 class GPTConfig:
     def __init__(self):
-        self.n_layer = 12
+        self.n_layer = 8
         self.d_embed = 768
-        self.n_heads = 12
-        self.vocab_size = 50257
+        self.n_heads = 4
+        self.vocab_size = 5025
         self.n_positions = 1024
-        self.n_ctx = 1024
+        self.n_ctx = 512
         self.layer_norm_epsilon = 1e-5
 
 lr = 1e-5
@@ -40,13 +40,11 @@ for epoch in range(EPOCHS):
         if input_ids.shape[1] == 0:
             continue
     
-        logits, presents = model(input_ids, past=past)  
+        logits, presents = model(input_ids)  
 
         loss = criterion(logits.view(-1, logits.size(-1)), targets.reshape(-1))  
         
         loss.backward()
         optimizer.step()
-
-        past = [tuple(p.detach() for p in present) for present in presents]
 
         print(f"Loss: {loss.item()}")
