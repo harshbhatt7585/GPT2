@@ -1,13 +1,13 @@
 import math 
 import torch 
 import torch.nn as nn
-import torch.nn.functional as F  # Fixed incorrect import
+import torch.nn.functional as F 
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, n_heads, d_embed):
         super().__init__()
         self.n_heads = n_heads
-        self.d_heads = d_embed // n_heads  # Head size
+        self.d_heads = d_embed // n_heads 
         self.in_proj = nn.Linear(d_embed, 3 * d_embed)
         self.out_proj = nn.Linear(d_embed, d_embed)
     
@@ -33,7 +33,7 @@ class MultiHeadAttention(nn.Module):
             k = torch.cat((past_key, k), dim=-2)  # Append along sequence dim
             v = torch.cat((past_value, v), dim=-2)  # Append along sequence dim
         
-        present = (k, v)  # Store for next time step
+        present = (k, v)
 
         # Scaled Dot-Product Attention
         weight = q @ k.transpose(-1, -2)  # (b, h, s, s)

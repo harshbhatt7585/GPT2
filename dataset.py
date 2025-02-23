@@ -11,7 +11,7 @@ class GPT2Dataset(torch.utils.data.Dataset):
         
         for text in texts:
             input_ids = tokenizer.encode(text)
-            self.input_ids.append(torch.tensor(input_ids, dtype=torch.int16))
+            self.input_ids.append(torch.tensor(input_ids, dtype=torch.long))
 
     def __len__(self):
         return len(self.input_ids)
