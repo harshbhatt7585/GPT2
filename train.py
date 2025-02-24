@@ -19,7 +19,7 @@ class GPTConfig:
 
         self.learning_rate = 1e-5
         self.epochs = 10
-        self.batch_size = 2
+        self.batch_size = 8
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
         self.wandb = True  # Set to True to enable Weights & Biases
@@ -45,6 +45,7 @@ dataloader, tokenizer = prepare_gpt2_dataset(batch_size=config.batch_size)
 
 for epoch in range(config.epochs):
     epoch_loss = 0
+    average_batch_loss = 0
     for idx, batch in enumerate(dataloader):
         optimizer.zero_grad()
         batch = batch.to(config.device)
@@ -61,19 +62,22 @@ for epoch in range(config.epochs):
         optimizer.step()
 
         epoch_loss += loss.item()
+        average_batch_loss += loss.item()
 
-        if config.wandb:
+        if config.wandb and idx % 50 == 0:
             wandb.log(
                 {
-                    "batch_loss": loss.item(),
+                    "batch_loss": average_batch_loss / 50,
                     "learning_rate": optimizer.param_groups[0]["lr"],
                 }
             )
-
-        print(f"Epoch [{epoch+1}/{config.epochs}], Batch [{idx+1}/{len(dataloader)}], Loss: {loss.item()}")
+            print(f"Epoch [{epoch+1}/{config.epochs}], Batch [{idx+1}/{len(dataloader)}], Average Loss over 50 batch: {average_batch_loss / 50}")
+            average_batch_loss = 0
 
     if config.wandb:
         wandb.log({"epoch_loss": epoch_loss / len(dataloader)})
+    
+    torch.save(f'models/gpt2_check_{epoch}')
 
 if config.wandb:
     wandb.finish()

@@ -39,7 +39,7 @@ def prepare_gpt2_dataset(dataset_name="wikitext", subset="wikitext-2-raw-v1", ba
     
     tokenizer = Encoder()
 
-    texts = dataset["train"]["text"][:100]
+    texts = dataset["train"]["text"]
 
     tokenized_dataset = GPT2Dataset(texts, tokenizer)
     
