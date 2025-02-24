@@ -77,7 +77,7 @@ for epoch in range(config.epochs):
     if config.wandb:
         wandb.log({"epoch_loss": epoch_loss / len(dataloader)})
     
-    torch.save(f'models/gpt2_check_{epoch}')
+    torch.save(model.state_dict(), f'models/gpt2_check_{epoch}.pt')
 
 if config.wandb:
     wandb.finish()
