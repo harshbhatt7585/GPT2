@@ -1,6 +1,6 @@
 import torch
 from transformer import GPT2
-from encoder import Encoder
+from GPT2.encoder import Encoder
 import torch.nn.functional as F
 from tqdm import trange  # Progress bar (optional)
 
@@ -52,19 +52,16 @@ past = None
 # Start Generating Tokens
 with torch.no_grad():
     for i in trange(length):
-        logits, past = model(prev, past=past)  # Forward pass with past
-        logits = logits[:, -1, :] / temperature  # Scale by temperature
+        logits, past = model(prev, past=past) 
+        logits = logits[:, -1, :] / temperature 
 
-        # Apply Top-K sampling (if needed)
         if top_k > 0:
             values, indices = torch.topk(logits, k=top_k, dim=-1)
             min_value = values[:, -1]
             logits[logits < min_value] = float('-inf')
 
-        # Convert logits to probabilities
         log_probs = F.softmax(logits, dim=-1)
 
-        # Sample next token
         if sample:
             prev = torch.multinomial(log_probs, num_samples=1)
         else:

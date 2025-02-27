@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from datasets import load_dataset
-from encoder import Encoder
+from encoder import Encoder, get_encoder
 
 class GPT2Dataset(torch.utils.data.Dataset):
     def __init__(self, texts, tokenizer, max_length=1024):
@@ -37,7 +37,7 @@ def prepare_gpt2_dataset(dataset_name="wikitext", subset="wikitext-2-raw-v1", ba
 
     dataset = load_dataset(dataset_name, subset)
     
-    tokenizer = Encoder()
+    tokenizer = get_encoder()
 
     texts = dataset["train"]["text"]
 

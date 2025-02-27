@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 from transformer import GPT2
 from dataset import prepare_gpt2_dataset
-from encoder import Encoder
+from encoder import Encoder, get_encoder
 
 
 class GPTConfig:
@@ -32,14 +32,15 @@ if config.wandb:
 
     wandb.init(
         project="gpt2-training",
-        name="experiment-1",
+        name="experiment-2",
         config={k: v for k, v in vars(config).items() if not callable(v) and not k.startswith("__")},
     )
 
 model = GPT2(config).to(config.device)
 criterion = nn.CrossEntropyLoss().to(config.device)
 optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-encoder = Encoder()
+# encoder = Encoder()
+encoder = get_encoder()
 
 dataloader, tokenizer = prepare_gpt2_dataset(batch_size=config.batch_size)
 
