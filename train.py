@@ -19,7 +19,7 @@ class GPTConfig:
 
         self.learning_rate = 1e-5
         self.epochs = 10
-        self.batch_size = 8
+        self.batch_size = 4
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
         self.wandb = True  # Set to True to enable Weights & Biases

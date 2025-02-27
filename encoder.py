@@ -52,14 +52,16 @@ class Encoder:
         Decodes token IDs back into text.
         """
         return self.tokenizer.decode(token_ids)
+    
+
 
 
 if __name__ == "__main__":
     encoder = Encoder(vocab_size=5000)
 
-    corpus_file = "corpus.txt"  
-    if not os.path.exists(encoder.model_path):
-        encoder.train([corpus_file])
+    # corpus_file = "corpus.txt"  
+    # if not os.path.exists(encoder.model_path):
+    #     encoder.train([corpus_file])
 
     text = "Hello, how are you?"
     encoded_ids = encoder.encode(text)
