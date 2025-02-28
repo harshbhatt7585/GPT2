@@ -1,6 +1,6 @@
 import torch
 from transformer import GPT2
-from GPT2.encoder import Encoder
+from encoder import Encoder, get_encoder
 import torch.nn.functional as F
 from tqdm import trange  # Progress bar (optional)
 
@@ -26,7 +26,7 @@ config = GPTConfig()
 
 # Load Model & Tokenizer
 model = GPT2(config)
-encoder = Encoder()
+encoder = get_encoder()
 
 # Load Pretrained Weights
 model.load_state_dict(torch.load('/Users/harshbhatt/Projects/implementations/GPT2/models/gpt2_check_0.pt', map_location=config.device))
@@ -41,7 +41,7 @@ sample = True
 device = config.device
 
 
-prompt = "The game began development in 2010"
+prompt = "Hello, How are you doing?"
 context = torch.tensor(encoder.encode(prompt), dtype=torch.long).unsqueeze(0).to(device)
 
 

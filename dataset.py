@@ -47,6 +47,19 @@ def prepare_gpt2_dataset(dataset_name="wikitext", subset="wikitext-2-raw-v1", ba
     
     return dataloader, tokenizer
 
+def prepare_validation_dataset(dataset_name="wikitext", subset="wikitext-2-raw-v1", batch_size=8):
+    dataset = load_dataset(dataset_name, subset)
+    
+    tokenizer = get_encoder()
+
+    texts = dataset["validation"]["text"]
+
+    tokenized_dataset = GPT2Dataset(texts, tokenizer)
+    
+    dataloader = DataLoader(tokenized_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+    
+    return dataloader
+
 # Example usage
 if __name__ == "__main__":
     dataloader, tokenizer = prepare_gpt2_dataset()
